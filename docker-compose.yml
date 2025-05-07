@@ -1,0 +1,36 @@
+services:
+  data_web:
+      container_name: data_web
+      build:
+          context: .
+          dockerfile: ${DOCKERFILE:-Dockerfile.local}
+
+      volumes:
+          - ./:/app
+      ports:
+          - "8000:8000"
+      env_file:
+          - .env
+      stdin_open: true
+      tty: true
+      depends_on:
+          - data_db
+      restart: ${RESTART_POLICY}
+
+  data_db:
+      container_name: data_db
+      image: postgres:16
+      restart: ${RESTART_POLICY}
+      environment:
+          POSTGRES_DB: ${POSTGRES_DB}
+          POSTGRES_USER: ${POSTGRES_USER}
+          POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ports:
+          - ":5432"
+      volumes:
+          - postgres_data:/var/lib/postgresql/data
+          
+
+
+volumes:
+    postgres_data:
