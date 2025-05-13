@@ -103,17 +103,17 @@ class Product(BaseModel):
     material = models.ForeignKey(Material, on_delete=models.PROTECT)
     pattern = models.ForeignKey(Pattern, on_delete=models.PROTECT)
     color = models.ForeignKey(Color, on_delete=models.PROTECT)
-    product_length = models.FloatField(blank=True, null=True)
-    product_width = models.FloatField(blank=True, null=True)
-    product_height = models.FloatField(blank=True, null=True)
-    product_weight = models.FloatField(blank=True, null=True)
+    product_length = models.CharField(max_length=25, blank=True, null=True)
+    product_width = models.CharField(max_length=25, blank=True, null=True)
+    product_height = models.CharField(max_length=25, blank=True, null=True)
+    product_weight = models.CharField(max_length=25, blank=True, null=True)
     size = models.CharField(max_length=25, blank=True, null=True)
     lifestyle_image_link = models.URLField(blank=True, null=True)
     max_handeling_time = models.IntegerField(blank=True, null=True)
     is_bundle = models.BooleanField(default=False)
     model = models.CharField(max_length=25)
     condition = models.CharField(max_length=15, choices=ProductConditionChoices.choices, default=ProductConditionChoices.NEW)
-
+    # tags = models.CharField(max_length=255, blank=True, null=True)
 
     
     def __str__(self):

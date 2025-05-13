@@ -1,6 +1,6 @@
 from django.db import models
 import uuid
-from products.models import BaseModel
+from apps.products.models import BaseModel
 
 # Create your models here.
 class ImportStatus(models.TextChoices):
@@ -24,6 +24,12 @@ class FileUploadTrack(BaseModel):
     warning_count = models.IntegerField(default=0)
     failed_count = models.IntegerField(default=0)
 
+    @property
+    def total_time_taken(self):
+        if self.end_time:
+            return self.end_time - self.start_time
+        return None
+    
     def __str__(self):
         return f"{self.file.name} - ({self.status})"
     
