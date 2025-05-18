@@ -1,36 +1,97 @@
 services:
-  data_web:
-      container_name: data_web
-      build:
-          context: .
-          dockerfile: ${DOCKERFILE:-Dockerfile.local}
+    data_web:
+        container_name: data_web
+        build:
+            context: .
+            dockerfile: ${DOCKERFILE:-Dockerfile.local}
+        volumes:
+            - ./:/app
+        ports:
+            - "8000:8000"
+        env_file:
+            - .env
+        stdin_open: true
+        tty: true
+        depends_on:
+            data_redis:
+                condition: service_healthy
+            data_db:
+                condition: service_started
+        restart: ${RESTART_POLICY}
+        networks:
+            - app_network
+        command: web
+        environment:
+            - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://data_redis:6379/0}
+            - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://data_redis:6379/0}
 
-      volumes:
-          - ./:/app
-      ports:
-          - "8000:8000"
-      env_file:
-          - .env
-      stdin_open: true
-      tty: true
-      depends_on:
-          - data_db
-      restart: ${RESTART_POLICY}
+    data_db:
+        container_name: data_db
+        image: postgres:16
+        restart: ${RESTART_POLICY}
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        ports:
+            - "5433:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - app_network
 
-  data_db:
-      container_name: data_db
-      image: postgres:16
-      restart: ${RESTART_POLICY}
-      environment:
-          POSTGRES_DB: ${POSTGRES_DB}
-          POSTGRES_USER: ${POSTGRES_USER}
-          POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      ports:
-          - ":5432"
-      volumes:
-          - postgres_data:/var/lib/postgresql/data
-          
+    data_redis:
+        image: redis:7.4.2
+        container_name: data_redis
+        restart: ${RESTART_POLICY:-always}
+        networks:
+            - app_network
+        ports:
+            - ":6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 30s
+            retries: 5
+        deploy:
+            resources:
+                limits:
+                    memory: "128M"
+        volumes:
+            - redis_data:/data
 
+    data_celery:
+        container_name: data_celery
+        build:
+            context: .
+            dockerfile: ${DOCKERFILE:-Dockerfile.local}
+        command: celery
+        volumes:
+            - ./:/app
+            - shared_data:/shared
+        env_file:
+            - .env
+        environment:
+            - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://data_redis:6379/0}
+            - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://data_redis:6379/0}
+        depends_on:
+            data_redis:
+                condition: service_healthy
+            data_db:
+                condition: service_started
+        restart: ${RESTART_POLICY:-always}
+        networks:
+            - app_network
+        deploy:
+            resources:
+                limits:
+                    memory: "2G"
+
+networks:
+    app_network:
+        driver: bridge
 
 volumes:
     postgres_data:
+    redis_data:
+    shared_data:

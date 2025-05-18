@@ -40,7 +40,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 
 #install runtime dependencies
-RUN apk add --no-cache libpq
+RUN apk add --no-cache libpq netcat-openbsd
 
 
 # set working directory

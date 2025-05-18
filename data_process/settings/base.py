@@ -30,7 +30,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     'apps.products',
-    'apps.logs'
+    'apps.logs',
+    'rest_framework',
+    'drf_spectacular'
 ]
 
 MIDDLEWARE = [
@@ -97,12 +99,23 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kathmandu"
 
 USE_I18N = True
 
 USE_TZ = True
 
+
+
+# Redis Configuration
+REDIS_HOST = 'data_redis'
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_PASSWORD = None
+REDIS_SOCKET_TIMEOUT = 30
+REDIS_SOCKET_CONNECT_TIMEOUT = 30
+REDIS_RETRY_ON_TIMEOUT = True
+REDIS_MAX_CONNECTIONS = 10
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -147,3 +160,32 @@ LOGGING = {
         },
     }
 }
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+
+
+# Celery Settings
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://data_redis:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://data_redis:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Redis Cache Settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://data_redis:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+# Session Settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'

@@ -4,3 +4,7 @@ python-decouple==3.8
 djangorestframework==3.16.0
 pandas==2.2.3
 openpyxl==3.1.5
+celery
+redis
+drf_spectacular
+django-redis>=5.2.0

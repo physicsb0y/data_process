@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3>File Upload Status</h3>
+                </div>
+                <div class="card-body">
+                    <div id="status-container">
+                        <p><strong>Process ID:</strong> <span id="process-id">{{ file_track.id }}</span></p>
+                        <p><strong>Status:</strong> <span id="status">{{ file_track.status }}</span></p>
+                        <p><strong>Total Records:</strong> <span id="total-records">{{ file_track.total_records }}</span></p>
+                        <p><strong>Success Count:</strong> <span id="success-count">{{ file_track.success_count }}</span></p>
+                        <p><strong>Warning Count:</strong> <span id="warning-count">{{ file_track.warning_count }}</span></p>
+                        <p><strong>Failed Count:</strong> <span id="failed-count">{{ file_track.failed_count }}</span></p>
+                        <p><strong>Start Time:</strong> <span id="start-time">{{ file_track.start_time }}</span></p>
+                        <p><strong>End Time:</strong> <span id="end-time">{{ file_track.end_time|default:"Processing..." }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateStatus() {
+    const processId = document.getElementById('process-id').textContent;
+    fetch(`/logs/api/file-upload/${processId}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('status').textContent = data.status;
+            document.getElementById('total-records').textContent = data.total_records;
+            document.getElementById('success-count').textContent = data.success_count;
+            document.getElementById('warning-count').textContent = data.warning_count;
+            document.getElementById('failed-count').textContent = data.failed_count;
+            document.getElementById('start-time').textContent = data.start_time;
+            document.getElementById('end-time').textContent = data.end_time || 'Processing...';
+
+            // Continue polling if the process is not complete
+            if (data.status === 'Pending' || data.status === 'Processing') {
+                setTimeout(updateStatus, 5000); // Poll every 5 seconds
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Start polling when the page loads
+document.addEventListener('DOMContentLoaded', updateStatus);
+</script>
+{% endblock %} 
